@@ -1,11 +1,14 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { IndentIncrease, IndentDecrease, Plus, Search, Library, Wallet, MessageCircle, Crown, Settings, Activity } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
-const Sidebar = ({ isOpen, setIsOpen, navigateToScreen, currentScreen }) => {
+const Sidebar = ({ isOpen, setIsOpen }) => {
     const [isDark, setIsDark] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [isWalletConnected, setIsWalletConnected] = useState(false);
+    const pathname = usePathname();
     const [chats, setChats] = useState([
         { id: 1, title: 'Trading Strategy Discussion', lastMessage: 'How to optimize DeFi yields...', timestamp: '2h ago' },
         { id: 2, title: 'NFT Market Analysis', lastMessage: 'The current trends show...', timestamp: '1d ago' },
@@ -21,27 +24,55 @@ const Sidebar = ({ isOpen, setIsOpen, navigateToScreen, currentScreen }) => {
         return () => observer.disconnect();
     }, []);
 
-    const filteredChats = chats.filter(chat => 
-        chat.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const filteredChats = chats.filter(chat =>
+        chat.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         chat.lastMessage.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const createNewChat = () => {
         const newChat = { id: chats.length + 1, title: `New Chat ${chats.length + 1}`, lastMessage: 'Start a new conversation...', timestamp: 'now' };
         setChats([newChat, ...chats]);
-        navigateToScreen('chat');
     };
 
-    const baseButtonClass = `w-full flex items-center rounded-xl transition-all duration-300 group ${isOpen ? 'justify-start p-3 space-x-3' : 'justify-center py-3'} ${isDark ? 'hover:bg-gray-700/60' : 'hover:bg-gray-100/60'}`;
+    const handleWalletClick = () => {
+        // Add wallet connection logic here
+        setIsWalletConnected(!isWalletConnected);
+        console.log('Wallet clicked, connected:', !isWalletConnected);
+    };
+
+    const baseButtonClass = `w-full flex items-center rounded-xl transition-all duration-300 group cursor-pointer ${isOpen ? 'justify-start p-3 space-x-3' : 'justify-center py-3'} ${isDark ? 'hover:bg-gray-700/60' : 'hover:bg-gray-100/60'}`;
     const textClass = `text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`;
     const iconClass = `w-5 h-5 ${isDark ? 'text-white' : 'text-gray-900'} transition-colors duration-300`;
 
-    const NavButton = ({ icon: Icon, label, hoverColor, isActive, onClick }) => (
-        <button onClick={onClick} className={`${baseButtonClass} ${isActive ? (isDark ? 'bg-gray-700/60' : 'bg-gray-100/60') : ''}`}>
-            <Icon className={`${iconClass} ${isActive ? 'text-blue-400' : `group-hover:${hoverColor}`}`} />
-            {isOpen && <span className={`${textClass} ${isActive ? 'text-blue-400' : `group-hover:${hoverColor}`}`}>{label}</span>}
-        </button>
-    );
+    const NavButton = ({ icon: Icon, label, hoverColor, href, isActive, onClick }) => {
+        const content = (
+            <>
+                <Icon className={`${iconClass} ${isActive ? 'text-blue-400' : `group-hover:${hoverColor}`}`} />
+                {isOpen && <span className={`${textClass} ${isActive ? 'text-blue-400' : `group-hover:${hoverColor}`}`}>{label}</span>}
+            </>
+        );
+
+        if (href) {
+            return (
+                <Link 
+                    href={href} 
+                    className={`${baseButtonClass} ${isActive ? (isDark ? 'bg-gray-700/60' : 'bg-gray-100/60') : ''}`}
+                    onClick={onClick}
+                >
+                    {content}
+                </Link>
+            );
+        }
+
+        return (
+            <button 
+                onClick={onClick} 
+                className={`${baseButtonClass} ${isActive ? (isDark ? 'bg-gray-700/60' : 'bg-gray-100/60') : ''}`}
+            >
+                {content}
+            </button>
+        );
+    };
 
     return (
         <div className={`fixed left-0 top-0 bottom-0 z-50 transition-all duration-700 ease-out ${isOpen ? 'w-72' : 'w-20'} p-3 h-screen`}>
@@ -55,32 +86,66 @@ const Sidebar = ({ isOpen, setIsOpen, navigateToScreen, currentScreen }) => {
                             </div>
                         </div>
                     )}
-                    <button onClick={() => setIsOpen(!isOpen)} className={`relative flex items-center justify-center h-10 w-10 rounded-xl transition-all duration-700 ease-out group transform hover:scale-105 active:scale-95 hover:shadow-2xl hover:shadow-blue-500/25 ${isDark ? 'hover:shadow-blue-400/20' : 'hover:shadow-blue-600/20'}`}>
+                    <button onClick={() => setIsOpen(!isOpen)} className={`relative flex items-center justify-center h-10 w-10 rounded-xl transition-all duration-700 ease-out group transform hover:scale-105 active:scale-95 hover:shadow-2xl hover:shadow-blue-500/25 cursor-pointer ${isDark ? 'hover:shadow-blue-400/20' : 'hover:shadow-blue-600/20'}`}>
                         <div className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-700 ease-out ${isDark ? 'bg-gradient-to-br from-white/10 via-white/5 to-transparent' : 'bg-gradient-to-br from-white/40 via-white/20 to-transparent'} backdrop-blur-xl`} />
-                        {isOpen ? 
-                            <IndentDecrease className={`w-5 h-5 transition-all duration-500 ease-out ${isDark ? 'text-white' : 'text-gray-900'} group-hover:text-blue-400 group-hover:scale-110 relative z-10 cursor-pointer`} /> :
-                            <IndentIncrease className={`w-5 h-5 transition-all duration-500 ease-out ${isDark ? 'text-white' : 'text-gray-900'} group-hover:text-blue-400 group-hover:scale-110 relative z-10 cursor-pointer`} />
+                        {isOpen ?
+                            <IndentDecrease className={`w-5 h-5 transition-all duration-500 ease-out ${isDark ? 'text-white' : 'text-gray-900'} group-hover:text-blue-400 group-hover:scale-110 relative z-10`} /> :
+                            <IndentIncrease className={`w-5 h-5 transition-all duration-500 ease-out ${isDark ? 'text-white' : 'text-gray-900'} group-hover:text-blue-400 group-hover:scale-110 relative z-10`} />
                         }
                     </button>
                 </div>
 
                 {/* Navigation */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                    <NavButton icon={Plus} label="New Chat" hoverColor="text-green-400" isActive={currentScreen === 'chat'} onClick={createNewChat} />
-                    
+                    <NavButton
+                        icon={Plus}
+                        label="New Chat"
+                        hoverColor="text-green-400"
+                        href="/chats"
+                        isActive={pathname === '/chats' || pathname === '/'}
+                        onClick={createNewChat}
+                    />
+
                     <div className={`${!isOpen && 'flex justify-start'}`}>
                         {isOpen ? (
                             <div className="relative">
                                 <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
-                                <input type="text" placeholder="Search chats..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`w-full pl-10 pr-4 py-2 rounded-lg text-sm ${isDark ? 'bg-gray-700/60 text-white placeholder-gray-400' : 'bg-white/60 text-gray-900 placeholder-gray-600'} border border-gray-200/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-300`} />
+                                <input
+                                    type="text"
+                                    placeholder="Search chats..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className={`w-full pl-10 pr-4 py-2 rounded-lg text-sm cursor-text ${isDark ? 'bg-gray-700/60 text-white placeholder-gray-400' : 'bg-white/60 text-gray-900 placeholder-gray-600'} border border-gray-200/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-300`}
+                                />
                             </div>
                         ) : (
-                            <Search className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
+                            <button className="cursor-pointer hover:scale-110 transition-transform duration-200">
+                                <Search className={`w-5 h-5 ${isDark ? 'text-gray-400 hover:text-blue-400' : 'text-gray-600 hover:text-blue-600'} transition-colors duration-300`} />
+                            </button>
                         )}
                     </div>
-
-                    <NavButton icon={Library} label="Library" hoverColor="text-purple-400" />
-                    <NavButton icon={Wallet} label="Wallet" hoverColor="text-blue-400" isActive={currentScreen === 'wallet'} onClick={() => navigateToScreen('wallet')} />
+                    
+                    <NavButton
+                        icon={Library}
+                        label="Library"
+                        hoverColor="text-purple-400"
+                        href="/library"
+                        isActive={pathname === '/library'}
+                    />
+                    
+                    <div className="relative">
+                        <NavButton
+                            icon={Wallet}
+                            label={isWalletConnected ? "Wallet Connected" : "Connect Wallet"}
+                            hoverColor="text-blue-400"
+                            href="/wallet"
+                            isActive={pathname === '/wallet'}
+                            onClick={handleWalletClick}
+                        />
+                        {isWalletConnected && (
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800 animate-pulse"></div>
+                        )}
+                    </div>
 
                     {/* Chats Section */}
                     <div className={`${!isOpen && 'hidden'}`}>
@@ -96,13 +161,17 @@ const Sidebar = ({ isOpen, setIsOpen, navigateToScreen, currentScreen }) => {
                                 </div>
                             ) : (
                                 filteredChats.map((chat) => (
-                                    <div key={chat.id} onClick={() => navigateToScreen('chat')} className={`flex items-start space-x-3 p-3 rounded-xl ${isDark ? 'hover:bg-gray-700/60' : 'hover:bg-gray-100/60'} transition-all duration-300 group cursor-pointer relative`}>
+                                    <Link
+                                        key={chat.id}
+                                        href={`/chats/${chat.id}`}
+                                        className={`flex items-start space-x-3 p-3 rounded-xl ${isDark ? 'hover:bg-gray-700/60' : 'hover:bg-gray-100/60'} transition-all duration-300 group cursor-pointer relative hover:scale-[1.02] active:scale-[0.98]`}
+                                    >
                                         <div className="flex-1 min-w-0">
-                                            <h4 className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} truncate`}>{chat.title}</h4>
+                                            <h4 className={`text-sm font-medium ${isDark ? 'text-white group-hover:text-blue-400' : 'text-gray-900 group-hover:text-blue-600'} truncate transition-colors duration-300`}>{chat.title}</h4>
                                             <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'} truncate mt-1`}>{chat.lastMessage}</p>
                                             <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'} mt-1`}>{chat.timestamp}</span>
                                         </div>
-                                    </div>
+                                    </Link>
                                 ))
                             )}
                         </div>
@@ -111,14 +180,21 @@ const Sidebar = ({ isOpen, setIsOpen, navigateToScreen, currentScreen }) => {
 
                 {/* Bottom Section */}
                 <div className="p-4 border-t border-gray-200/20 space-y-2">
-                    <button className={`w-full flex items-center space-x-3 p-3 rounded-xl ${isDark ? 'hover:bg-gradient-to-r hover:from-yellow-500/20 hover:to-orange-500/20' : 'hover:bg-gradient-to-r hover:from-yellow-500/20 hover:to-orange-500/20'} transition-all duration-300 group ${!isOpen && 'justify-center'}`}>
+                    <Link
+                        href="/upgrade"
+                        className={`w-full flex items-center space-x-3 p-3 rounded-xl ${isDark ? 'hover:bg-gradient-to-r hover:from-yellow-500/20 hover:to-orange-500/20' : 'hover:bg-gradient-to-r hover:from-yellow-500/20 hover:to-orange-500/20'} transition-all duration-300 group cursor-pointer hover:scale-[1.02] active:scale-[0.98] ${!isOpen && 'justify-center'}`}
+                    >
                         <Crown className={`w-5 h-5 ${isDark ? 'text-white' : 'text-gray-900'} group-hover:text-yellow-400 transition-colors duration-300`} />
-                        {isOpen && <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} group-hover:text-yellow-400`}>Upgrade Plan</span>}
-                    </button>
-                    <button className={`w-full flex items-center space-x-3 p-3 rounded-xl ${isDark ? 'hover:bg-gray-700/60' : 'hover:bg-gray-100/60'} transition-all duration-300 group ${!isOpen && 'justify-center'}`}>
+                        {isOpen && <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} group-hover:text-yellow-400 transition-colors duration-300`}>Upgrade Plan</span>}
+                    </Link>
+                    
+                    <Link
+                        href="/settings"
+                        className={`w-full flex items-center space-x-3 p-3 rounded-xl ${isDark ? 'hover:bg-gray-700/60' : 'hover:bg-gray-100/60'} transition-all duration-300 group cursor-pointer hover:scale-[1.02] active:scale-[0.98] ${!isOpen && 'justify-center'}`}
+                    >
                         <Settings className={`w-5 h-5 ${isDark ? 'text-white' : 'text-gray-900'} group-hover:text-blue-400 group-hover:rotate-90 transition-all duration-300`} />
-                        {isOpen && <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} group-hover:text-blue-400`}>Settings</span>}
-                    </button>
+                        {isOpen && <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} group-hover:text-blue-400 transition-colors duration-300`}>Settings</span>}
+                    </Link>
                 </div>
                 <div className={`absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-400/50 to-transparent opacity-60`} />
             </div>
